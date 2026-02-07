@@ -250,6 +250,7 @@
       letter-spacing: 1px;
     }
     .filter-group input[type="number"],
+    .filter-group input[type="date"],
     .filter-group select {
       padding: 6px 10px;
       background: var(--input-bg);
@@ -261,13 +262,80 @@
       transition: border-color var(--transition), background var(--transition), color var(--transition);
     }
     .filter-group input[type="number"]:focus,
+    .filter-group input[type="date"]:focus,
     .filter-group select:focus {
       outline: none;
       border-color: var(--input-focus-border);
       box-shadow: var(--glow);
     }
+    .filter-group input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: invert(0.5) sepia(1) saturate(5) hue-rotate(90deg);
+      cursor: pointer;
+    }
+    [data-theme="light"] .filter-group input[type="date"]::-webkit-calendar-picker-indicator {
+      filter: none;
+    }
     .filter-group input[type="number"] { width: 80px; }
+    .filter-group input[type="date"] { width: 140px; }
     .filter-group select { min-width: 160px; }
+
+    /* Action buttons */
+    .btn-action {
+      padding: 6px 14px;
+      border: 1px solid var(--accent-primary);
+      border-radius: var(--radius-sm);
+      background: var(--bg-tertiary);
+      color: var(--accent-primary);
+      font-size: 12px;
+      font-weight: bold;
+      font-family: inherit;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all var(--transition);
+      white-space: nowrap;
+      align-self: flex-end;
+      margin-bottom: 1px;
+    }
+    .btn-action:hover {
+      background: var(--bg-hover);
+      box-shadow: var(--glow);
+    }
+    .btn-action:active {
+      transform: scale(0.97);
+    }
+    .btn-action.btn-clear {
+      border-color: var(--text-muted);
+      color: var(--text-muted);
+    }
+    .btn-action.btn-clear:hover {
+      border-color: var(--holiday-text);
+      color: var(--holiday-text);
+    }
+
+    /* Optimizer stats */
+    .optimizer-stats {
+      display: none;
+      padding: 8px 24px;
+      background: var(--bg-tertiary);
+      border-bottom: 1px solid var(--border-color);
+      font-size: 12px;
+      color: var(--text-secondary);
+      gap: 20px;
+      flex-wrap: wrap;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+    }
+    .optimizer-stats.active { display: flex; }
+    .optimizer-stats .stat {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .optimizer-stats .stat-val {
+      color: var(--accent-primary);
+      font-weight: bold;
+      text-shadow: var(--glow);
+    }
     .filter-group-checkbox {
       flex-direction: row;
       align-items: center;
@@ -683,6 +751,12 @@
         <input type="checkbox" id="count-weekends">
         <label for="count-weekends">Count Weekends</label>
       </div>
+      <div class="filter-group">
+        <label for="start-date">Start From</label>
+        <input type="date" id="start-date">
+      </div>
+      <button class="btn-action" id="btn-optimize" title="Fill bridge days greedily, shortest gaps first">Optimize</button>
+      <button class="btn-action btn-clear" id="btn-clear" title="Remove all vacation days">Clear</button>
       <div class="loading-indicator" id="loading-indicator">
         <div class="loading-spinner-small"></div>
         <span>Loading holidays...</span>
@@ -704,6 +778,9 @@
 
     <!-- Warning Banner -->
     <div class="warning-banner" id="warning-banner"></div>
+
+    <!-- Optimizer Stats -->
+    <div class="optimizer-stats" id="optimizer-stats"></div>
 
     <!-- Calendar -->
     <div class="calendar-container">

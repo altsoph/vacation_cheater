@@ -62,3 +62,13 @@ Rules for optimization:
 - stop then all the gaps left in the future (starting from the closest monday) are 5 days or then we are out of days
 # feel free to propose other interesting ideas if you have any
 
+//
+
+I like stats you made, but things like Free blocks (2+ days) and others -- 
+they consider usual weekends making the stats non-informative
+
+/4/
+
+change title to Vacation Cheater
+add export mode -- save PNG to clipboard (or open in a new tab); we want there to see only calendar + legend + title 
+and copyright line (c)altsoph,  http://altsoph.com/pp/vc

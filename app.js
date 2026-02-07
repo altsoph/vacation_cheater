@@ -308,7 +308,8 @@
     warnings: [],
 
     // Vacation editor
-    vacationDates: new Set() // set of 'YYYY-MM-DD' strings
+    vacationDates: new Set(), // set of 'YYYY-MM-DD' strings
+    startDate: null           // Date object — optimizer start date
   };
 
   // ===== DOM References =====
@@ -330,7 +331,11 @@
     legendUnconfirmed: null,
     vacationCounter: null,
     vacationUsed: null,
-    vacationTotal: null
+    vacationTotal: null,
+    startDateInput: null,
+    btnOptimize: null,
+    btnClear: null,
+    optimizerStats: null
   };
 
   // ===== Initialization =====
@@ -346,6 +351,7 @@
     dom.countrySelect.value = state.country;
     updateSubdivisions();
     updateVacationCounter();
+    setDefaultStartDate();
 
     // Fetch holidays and render
     fetchHolidaysAndRender();
@@ -369,6 +375,10 @@
     dom.vacationCounter = document.getElementById('vacation-counter');
     dom.vacationUsed = document.getElementById('vacation-used');
     dom.vacationTotal = document.getElementById('vacation-total');
+    dom.startDateInput = document.getElementById('start-date');
+    dom.btnOptimize = document.getElementById('btn-optimize');
+    dom.btnClear = document.getElementById('btn-clear');
+    dom.optimizerStats = document.getElementById('optimizer-stats');
   }
 
   // ===== Theme Management =====
@@ -557,10 +567,12 @@
     state.vacationDates.clear();
 
     buildHolidayMap();
+    setDefaultStartDate();
     renderCalendar();
     updateHolidayInfo();
     updateWarnings();
     updateVacationCounter();
+    hideOptimizerStats();
 
     dom.loadingIndicator.classList.remove('active');
   }
@@ -858,6 +870,28 @@
 
   // ===== Vacation Editor =====
 
+  function formatDateStr(d) {
+    return d.getFullYear() + '-' +
+      String(d.getMonth() + 1).padStart(2, '0') + '-' +
+      String(d.getDate()).padStart(2, '0');
+  }
+
+  function setDefaultStartDate() {
+    var today = new Date();
+    var start;
+    if (state.year === today.getFullYear()) {
+      start = today;
+    } else if (state.year > today.getFullYear()) {
+      start = new Date(state.year, 0, 1);
+    } else {
+      start = new Date(state.year, 0, 1);
+    }
+    state.startDate = start;
+    if (dom.startDateInput) {
+      dom.startDateInput.value = formatDateStr(start);
+    }
+  }
+
   function onDayClick(e) {
     var dateStr = e.currentTarget.dataset.date;
     if (!dateStr) return;
@@ -901,6 +935,215 @@
       } else {
         dom.vacationCounter.classList.remove('over-budget');
       }
+    }
+  }
+
+  // ===== Optimizer =====
+
+  /**
+   * Greedy vacation optimizer:
+   * 1. Scan dates from startDate to Dec 31
+   * 2. Find gaps (consecutive working days) between free days (weekends/holidays)
+   * 3. Sort gaps by length (shortest first) — these are bridge-day opportunities
+   * 4. Fill gaps < 5 days (most efficient) while budget allows
+   * 5. If budget remains, fill shortest remaining gaps (full weeks) that maximize
+   *    connected free time, picking those adjacent to the longest free blocks first
+   * 6. Stop when out of days
+   */
+  function runOptimizer() {
+    state.vacationDates.clear();
+
+    var budget = state.vacationDays;
+    if (budget <= 0) {
+      renderCalendar();
+      updateVacationCounter();
+      hideOptimizerStats();
+      return;
+    }
+
+    var startD = new Date(state.startDate);
+    var endD = new Date(state.year, 11, 31);
+
+    // Build day list: array of { date: string, free: bool }
+    var days = [];
+    for (var d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+      var dateStr = formatDateStr(d);
+      var dow = d.getDay(); // 0=Sun, 6=Sat
+      var isWeekend = dow === 0 || dow === 6;
+      var isHoliday = state.holidayMap.has(dateStr);
+      days.push({ date: dateStr, free: isWeekend || isHoliday });
+    }
+
+    if (days.length === 0) {
+      renderCalendar();
+      updateVacationCounter();
+      hideOptimizerStats();
+      return;
+    }
+
+    // Find gaps: consecutive runs of non-free days
+    var gaps = [];
+    var currentGap = [];
+    // Track adjacent free block lengths for priority scoring
+    var lastFreeBlockLen = 0;
+
+    for (var i = 0; i < days.length; i++) {
+      if (days[i].free) {
+        if (currentGap.length > 0) {
+          // Count free block after this gap
+          var freeAfter = 0;
+          for (var k = i; k < days.length && days[k].free; k++) {
+            freeAfter++;
+          }
+          gaps.push({
+            dates: currentGap.slice(),
+            length: currentGap.length,
+            freeBefore: lastFreeBlockLen,
+            freeAfter: freeAfter
+          });
+          currentGap = [];
+        }
+        // Count this free block
+        lastFreeBlockLen = 0;
+        for (var j = i; j < days.length && days[j].free; j++) {
+          lastFreeBlockLen++;
+        }
+      } else {
+        currentGap.push(days[i].date);
+      }
+    }
+    // Trailing gap — no free block after it, less valuable
+    if (currentGap.length > 0) {
+      gaps.push({
+        dates: currentGap.slice(),
+        length: currentGap.length,
+        freeBefore: lastFreeBlockLen,
+        freeAfter: 0
+      });
+    }
+
+    // Phase 1: Fill bridge gaps (< 5 days), sorted by length then by best adjacent free blocks
+    var bridgeGaps = gaps.filter(function (g) { return g.length < 5; });
+    bridgeGaps.sort(function (a, b) {
+      if (a.length !== b.length) return a.length - b.length;
+      // Same length: prefer the one with more adjacent free days (higher payoff)
+      var payoffA = a.freeBefore + a.freeAfter;
+      var payoffB = b.freeBefore + b.freeAfter;
+      return payoffB - payoffA;
+    });
+
+    for (var g1 = 0; g1 < bridgeGaps.length; g1++) {
+      var gap1 = bridgeGaps[g1];
+      if (budget < gap1.length) continue;
+      for (var d1 = 0; d1 < gap1.dates.length; d1++) {
+        state.vacationDates.add(gap1.dates[d1]);
+      }
+      budget -= gap1.length;
+    }
+
+    // Phase 2: If budget remains, fill remaining gaps (>= 5 days) sorted by total
+    // payoff (adjacent free days / cost), so we get the most connected time off
+    if (budget > 0) {
+      var longGaps = gaps.filter(function (g) { return g.length >= 5; });
+      longGaps.sort(function (a, b) {
+        // Efficiency: total connected free time per vacation day spent
+        var effA = (a.freeBefore + a.freeAfter + a.length) / a.length;
+        var effB = (b.freeBefore + b.freeAfter + b.length) / b.length;
+        if (effA !== effB) return effB - effA;
+        return a.length - b.length;
+      });
+
+      for (var g2 = 0; g2 < longGaps.length; g2++) {
+        var gap2 = longGaps[g2];
+        if (budget < gap2.length) continue;
+        for (var d2 = 0; d2 < gap2.dates.length; d2++) {
+          state.vacationDates.add(gap2.dates[d2]);
+        }
+        budget -= gap2.length;
+      }
+    }
+
+    renderCalendar();
+    updateVacationCounter();
+    showOptimizerStats(days);
+  }
+
+  function clearVacation() {
+    state.vacationDates.clear();
+    renderCalendar();
+    updateVacationCounter();
+    hideOptimizerStats();
+  }
+
+  /**
+   * Compute and display statistics about the current vacation plan.
+   */
+  function showOptimizerStats(days) {
+    if (!dom.optimizerStats) return;
+    if (state.vacationDates.size === 0) {
+      hideOptimizerStats();
+      return;
+    }
+
+    // Rebuild day list with vacation included to find free blocks
+    var allDays = [];
+    var startD = new Date(state.year, 0, 1);
+    var endD = new Date(state.year, 11, 31);
+    for (var d = new Date(startD); d <= endD; d.setDate(d.getDate() + 1)) {
+      var dateStr = formatDateStr(d);
+      var dow = d.getDay();
+      var isWeekend = dow === 0 || dow === 6;
+      var isHoliday = state.holidayMap.has(dateStr);
+      var isVacation = state.vacationDates.has(dateStr);
+      allDays.push({ date: dateStr, free: isWeekend || isHoliday || isVacation });
+    }
+
+    // Find free blocks that contain at least one vacation day
+    // (skip plain weekends — those aren't interesting)
+    var blocks = [];
+    var current = [];
+    var currentHasVacation = false;
+    for (var i = 0; i < allDays.length; i++) {
+      if (allDays[i].free) {
+        current.push(allDays[i].date);
+        if (state.vacationDates.has(allDays[i].date)) {
+          currentHasVacation = true;
+        }
+      } else {
+        if (current.length > 0 && currentHasVacation) {
+          blocks.push(current.slice());
+        }
+        current = [];
+        currentHasVacation = false;
+      }
+    }
+    if (current.length > 0 && currentHasVacation) {
+      blocks.push(current.slice());
+    }
+
+    var longestBlock = 0;
+    var totalFreeDays = 0;
+    for (var b = 0; b < blocks.length; b++) {
+      if (blocks[b].length > longestBlock) longestBlock = blocks[b].length;
+      totalFreeDays += blocks[b].length;
+    }
+
+    var used = state.vacationDates.size;
+    var efficiency = used > 0 ? (totalFreeDays / used).toFixed(1) : '0';
+
+    var html = '<span class="stat">Vacation days used: <span class="stat-val">' + used + '</span></span>' +
+      '<span class="stat">Vacation streaks: <span class="stat-val">' + blocks.length + '</span></span>' +
+      '<span class="stat">Longest streak: <span class="stat-val">' + longestBlock + ' days</span></span>' +
+      '<span class="stat">Total days off: <span class="stat-val">' + totalFreeDays + '</span></span>' +
+      '<span class="stat">Efficiency: <span class="stat-val">' + efficiency + 'x</span> (days off per vacation day)</span>';
+
+    dom.optimizerStats.innerHTML = html;
+    dom.optimizerStats.classList.add('active');
+  }
+
+  function hideOptimizerStats() {
+    if (dom.optimizerStats) {
+      dom.optimizerStats.classList.remove('active');
     }
   }
 
@@ -953,6 +1196,23 @@
     dom.countWeekends.addEventListener('change', function () {
       state.countWeekends = dom.countWeekends.checked;
     });
+
+    // Start date
+    dom.startDateInput.addEventListener('change', function () {
+      var val = dom.startDateInput.value;
+      if (val) {
+        var parts = val.split('-');
+        state.startDate = new Date(
+          parseInt(parts[0], 10),
+          parseInt(parts[1], 10) - 1,
+          parseInt(parts[2], 10)
+        );
+      }
+    });
+
+    // Optimizer buttons
+    dom.btnOptimize.addEventListener('click', runOptimizer);
+    dom.btnClear.addEventListener('click', clearVacation);
   }
 
   // ===== Start =====
