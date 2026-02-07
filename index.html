@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CheatVacation — Vacation Day Optimizer</title>
+
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="CheatVacation: Optimize your vacation days by leveraging public holidays and weekends. Plan smarter, vacation longer.">
+  <meta name="keywords" content="vacation, holiday, optimizer, calendar, public holidays, days off, vacation planning, bridge days">
+  <meta name="author" content="altsoph">
+  <meta name="robots" content="index, follow">
+
+  <!-- Open Graph / Facebook / LinkedIn -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://altsoph.com/pp/cheatvacation/">
+  <meta property="og:title" content="CheatVacation — Vacation Day Optimizer">
+  <meta property="og:description" content="Optimize your vacation days by leveraging public holidays and weekends. Plan smarter, vacation longer.">
+  <meta property="og:image" content="https://altsoph.com/pp/cheatvacation/preview.png">
+  <meta property="og:site_name" content="altsoph">
+
+  <!-- Twitter / X -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:site" content="@altsoph">
+  <meta name="twitter:creator" content="@altsoph">
+  <meta name="twitter:title" content="CheatVacation — Vacation Day Optimizer">
+  <meta name="twitter:description" content="Optimize your vacation days by leveraging public holidays and weekends. Plan smarter, vacation longer.">
+  <meta name="twitter:image" content="https://altsoph.com/pp/cheatvacation/preview.png">
+  <meta name="twitter:image:alt" content="CheatVacation preview — calendar with optimized vacation days">
+
+  <!-- Telegram -->
+  <meta property="og:image:alt" content="CheatVacation — Vacation Day Optimizer Calendar">
+
+  <!-- Additional Meta -->
+  <meta name="theme-color" content="#00ff00">
+  <link rel="canonical" href="https://altsoph.com/pp/cheatvacation/">
+
+  <!-- Favicon placeholder (to be provided later) -->
+  <!-- <link rel="icon" type="image/svg+xml" href="favicon.svg"> -->
+
+  <style>
+    /* ===== Dark Theme (Hacker Green — from example.html) ===== */
+    [data-theme="dark"] {
+      --bg-primary: #000000;
+      --bg-secondary: #0a0f0a;
+      --bg-tertiary: #0f1a0f;
+      --bg-hover: #1a2a1a;
+      --text-primary: #00ff00;
+      --text-secondary: #00cc00;
+      --text-muted: #008800;
+      --accent-primary: #00ff00;
+      --accent-secondary: #33ff33;
+      --border-color: #003300;
+      --shadow: 0 0 10px rgba(0, 255, 0, 0.2);
+      --glow: 0 0 5px #00ff00;
+      --radius: 4px;
+      --radius-sm: 2px;
+      --transition: 0.15s ease;
+
+      /* Calendar-specific */
+      --weekend-bg: #332200;
+      --weekend-text: #ffaa00;
+      --holiday-bg: #3a0000;
+      --holiday-text: #ff4444;
+      --holiday-weekend-bg: #3a1a00;
+      --holiday-weekend-text: #ff6622;
+      --today-outline: #00ff00;
+      --day-hover-bg: #0f1f0f;
+      --month-header-bg: #0a0f0a;
+      --weekday-header: #008800;
+
+      /* Inputs */
+      --input-bg: #0a0f0a;
+      --input-border: #003300;
+      --input-focus-border: #00ff00;
+      --input-text: #00ff00;
+
+      /* Unconfirmed holidays (Nager-only) */
+      --unconfirmed-bg: #1a1a00;
+      --unconfirmed-text: #cccc00;
+      --warning-bg: #1a1a00;
+      --warning-border: #666600;
+      --warning-text: #cccc00;
+
+      /* Vacation days */
+      --vacation-bg: #002a3a;
+      --vacation-text: #44ccff;
+      --vacation-weekend-bg: #1a2200;
+      --vacation-weekend-text: #aadd44;
+
+      /* Toggle */
+      --toggle-bg: #003300;
+      --toggle-active: #00ff00;
+    }
+
+    /* ===== Light Theme ===== */
+    [data-theme="light"] {
+      --bg-primary: #f4f6f3;
+      --bg-secondary: #ffffff;
+      --bg-tertiary: #e8ece6;
+      --bg-hover: #dce2d9;
+      --text-primary: #1b2e1b;
+      --text-secondary: #3a5a3a;
+      --text-muted: #7a9a7a;
+      --accent-primary: #2d6a4f;
+      --accent-secondary: #1b4332;
+      --border-color: #c2d4bc;
+      --shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+      --glow: none;
+      --radius: 6px;
+      --radius-sm: 3px;
+      --transition: 0.15s ease;
+
+      /* Calendar-specific */
+      --weekend-bg: #ffe0b2;
+      --weekend-text: #b34700;
+      --holiday-bg: #ffcdd2;
+      --holiday-text: #b71c1c;
+      --holiday-weekend-bg: #ffc9a0;
+      --holiday-weekend-text: #c23000;
+      --today-outline: #2d6a4f;
+      --day-hover-bg: #e8ece6;
+      --month-header-bg: #f4f6f3;
+      --weekday-header: #7a9a7a;
+
+      /* Inputs */
+      --input-bg: #ffffff;
+      --input-border: #c2d4bc;
+      --input-focus-border: #2d6a4f;
+      --input-text: #1b2e1b;
+
+      /* Unconfirmed holidays (Nager-only) */
+      --unconfirmed-bg: #fff9c4;
+      --unconfirmed-text: #9e6d00;
+      --warning-bg: #fff8e1;
+      --warning-border: #f9a825;
+      --warning-text: #8d6e00;
+
+      /* Vacation days */
+      --vacation-bg: #bbdefb;
+      --vacation-text: #0d47a1;
+      --vacation-weekend-bg: #dcedc8;
+      --vacation-weekend-text: #33691e;
+
+      /* Toggle */
+      --toggle-bg: #c2d4bc;
+      --toggle-active: #2d6a4f;
+    }
+
+    /* ===== Reset ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    html, body {
+      height: 100%;
+      font-family: 'Courier New', 'Consolas', 'Liberation Mono', monospace;
+      font-size: 16px;
+      line-height: 1.4;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      transition: background var(--transition), color var(--transition);
+    }
+
+    /* ===== App Layout ===== */
+    #app {
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    /* ===== Header ===== */
+    .header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .header-title {
+      font-size: 20px;
+      font-weight: bold;
+      text-shadow: var(--glow);
+      letter-spacing: 2px;
+      color: var(--accent-primary);
+      text-decoration: none;
+      transition: color var(--transition);
+    }
+    .header-title:hover { text-shadow: 0 0 15px var(--accent-primary); }
+
+    /* Theme Toggle */
+    .theme-toggle {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      cursor: pointer;
+      user-select: none;
+    }
+    .theme-toggle-label {
+      font-size: 12px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      min-width: 44px;
+      text-align: right;
+    }
+    .theme-toggle-track {
+      position: relative;
+      width: 44px;
+      height: 22px;
+      background: var(--toggle-bg);
+      border-radius: 11px;
+      border: 1px solid var(--border-color);
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .theme-toggle-thumb {
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 16px;
+      height: 16px;
+      background: var(--accent-primary);
+      border-radius: 50%;
+      transition: transform 0.2s ease, background var(--transition);
+      box-shadow: var(--glow);
+    }
+    [data-theme="light"] .theme-toggle-thumb {
+      transform: translateX(22px);
+    }
+
+    /* ===== Filters Bar ===== */
+    .filters-bar {
+      display: flex;
+      align-items: flex-end;
+      gap: 16px;
+      padding: 14px 24px;
+      background: var(--bg-secondary);
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .filter-group {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    .filter-group label {
+      font-size: 11px;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+    .filter-group input[type="number"],
+    .filter-group select {
+      padding: 6px 10px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      color: var(--input-text);
+      font-size: 14px;
+      font-family: inherit;
+      transition: border-color var(--transition), background var(--transition), color var(--transition);
+    }
+    .filter-group input[type="number"]:focus,
+    .filter-group select:focus {
+      outline: none;
+      border-color: var(--input-focus-border);
+      box-shadow: var(--glow);
+    }
+    .filter-group input[type="number"] { width: 80px; }
+    .filter-group select { min-width: 160px; }
+    .filter-group-checkbox {
+      flex-direction: row;
+      align-items: center;
+      gap: 6px;
+      padding-bottom: 6px;
+    }
+    .filter-group-checkbox label {
+      font-size: 13px;
+      text-transform: none;
+      letter-spacing: 0;
+      cursor: pointer;
+    }
+    .filter-group-checkbox input[type="checkbox"] {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 16px;
+      background: var(--input-bg);
+      border: 1px solid var(--input-border);
+      border-radius: var(--radius-sm);
+      cursor: pointer;
+      position: relative;
+      vertical-align: middle;
+      flex-shrink: 0;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .filter-group-checkbox input[type="checkbox"]:checked {
+      background: var(--accent-primary);
+      border-color: var(--accent-primary);
+    }
+    .filter-group-checkbox input[type="checkbox"]:checked::after {
+      content: '\2713';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      color: var(--bg-primary);
+      font-size: 12px;
+      font-weight: bold;
+      line-height: 1;
+    }
+    .filter-group-checkbox input[type="checkbox"]:focus {
+      outline: none;
+      border-color: var(--input-focus-border);
+      box-shadow: var(--glow);
+    }
+
+    /* Holiday count info */
+    .holiday-info {
+      margin-left: auto;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding-bottom: 6px;
+      white-space: nowrap;
+    }
+    .holiday-info .info-value {
+      color: var(--accent-primary);
+      font-weight: bold;
+      text-shadow: var(--glow);
+    }
+
+    /* ===== Calendar Grid ===== */
+    .calendar-container {
+      flex: 1;
+      padding: 20px 24px;
+      overflow-y: auto;
+    }
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    /* ===== Month Cell ===== */
+    .month-cell {
+      background: var(--bg-secondary);
+      border: 1px solid var(--border-color);
+      border-radius: var(--radius);
+      padding: 10px;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .month-title {
+      text-align: center;
+      font-size: 14px;
+      font-weight: bold;
+      color: var(--accent-primary);
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      margin-bottom: 8px;
+      text-shadow: var(--glow);
+      transition: color var(--transition);
+    }
+
+    /* ===== Month Table ===== */
+    .month-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+    .month-table th {
+      font-size: 11px;
+      color: var(--weekday-header);
+      text-align: center;
+      padding: 4px 2px;
+      font-weight: bold;
+      border-bottom: 1px solid var(--border-color);
+      transition: color var(--transition), border-color var(--transition);
+    }
+    .month-table th.th-weekend {
+      color: var(--weekend-text);
+    }
+    .month-table td {
+      text-align: center;
+      padding: 5px 2px;
+      font-size: 13px;
+      cursor: default;
+      border-radius: var(--radius-sm);
+      transition: background var(--transition), color var(--transition);
+      position: relative;
+    }
+    .month-table td.day:hover {
+      background: var(--day-hover-bg);
+    }
+    .month-table td.day-empty {
+      /* empty cells */
+    }
+
+    /* Day types */
+    .day-weekend {
+      background: var(--weekend-bg);
+      color: var(--weekend-text);
+    }
+    .day-holiday {
+      background: var(--holiday-bg);
+      color: var(--holiday-text);
+      font-weight: bold;
+    }
+    .day-holiday.day-weekend {
+      background: var(--holiday-weekend-bg);
+      color: var(--holiday-weekend-text);
+    }
+    .day-today {
+      outline: 2px solid var(--today-outline);
+      outline-offset: -2px;
+      font-weight: bold;
+    }
+
+    /* Holiday dot indicator */
+    .day-holiday::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 4px;
+      background: var(--holiday-text);
+      border-radius: 50%;
+      margin: 1px auto 0;
+    }
+
+    /* Vacation day */
+    .day-vacation {
+      background: var(--vacation-bg);
+      color: var(--vacation-text);
+      font-weight: bold;
+    }
+    .day-vacation.day-weekend {
+      background: var(--vacation-weekend-bg);
+      color: var(--vacation-weekend-text);
+    }
+    .day-vacation::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 4px;
+      background: var(--vacation-text);
+      border-radius: 50%;
+      margin: 1px auto 0;
+    }
+
+    /* Clickable working days */
+    .day-clickable {
+      cursor: pointer;
+    }
+    .day-clickable:hover {
+      background: var(--day-hover-bg);
+      outline: 1px solid var(--accent-primary);
+      outline-offset: -1px;
+    }
+    .day-vacation.day-clickable:hover {
+      opacity: 0.8;
+    }
+
+    /* Unconfirmed holiday (Nager-only, not in OpenHolidaysAPI) */
+    .day-unconfirmed {
+      background: var(--unconfirmed-bg);
+      color: var(--unconfirmed-text);
+      font-weight: bold;
+      outline: 1px dashed var(--unconfirmed-text);
+      outline-offset: -1px;
+    }
+    .day-unconfirmed::after {
+      content: '';
+      display: block;
+      width: 4px;
+      height: 4px;
+      background: var(--unconfirmed-text);
+      border-radius: 50%;
+      margin: 1px auto 0;
+    }
+
+    /* ===== Warning Banner ===== */
+    .warning-banner {
+      display: none;
+      padding: 10px 24px;
+      background: var(--warning-bg);
+      border-bottom: 1px solid var(--warning-border);
+      font-size: 12px;
+      color: var(--warning-text);
+      line-height: 1.6;
+      transition: background var(--transition), border-color var(--transition), color var(--transition);
+    }
+    .warning-banner.active { display: block; }
+    .warning-banner-title {
+      font-weight: bold;
+      margin-bottom: 4px;
+    }
+    .warning-banner ul {
+      margin: 0;
+      padding-left: 20px;
+    }
+    .warning-banner li {
+      list-style: disc;
+    }
+
+    /* ===== Legend ===== */
+    .legend {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+      padding: 12px 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      border-bottom: 1px solid var(--border-color);
+      flex-wrap: wrap;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      color: var(--text-secondary);
+    }
+    .legend-swatch {
+      width: 16px;
+      height: 16px;
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border-color);
+    }
+    .legend-swatch.swatch-weekend { background: var(--weekend-bg); border-color: var(--weekend-text); }
+    .legend-swatch.swatch-holiday { background: var(--holiday-bg); border-color: var(--holiday-text); }
+    .legend-swatch.swatch-vacation { background: var(--vacation-bg); border-color: var(--vacation-text); }
+    .legend-swatch.swatch-unconfirmed { background: var(--unconfirmed-bg); border-color: var(--unconfirmed-text); outline: 1px dashed var(--unconfirmed-text); outline-offset: -1px; }
+    .legend-swatch.swatch-today { background: transparent; outline: 2px solid var(--today-outline); outline-offset: -2px; }
+
+    /* Vacation counter */
+    .vacation-counter {
+      font-size: 13px;
+      font-weight: bold;
+      color: var(--text-muted);
+      letter-spacing: 1px;
+    }
+    .vacation-counter .info-value {
+      color: var(--accent-primary);
+      text-shadow: var(--glow);
+    }
+    .vacation-counter.over-budget .info-value:first-child {
+      color: var(--holiday-text);
+      text-shadow: none;
+    }
+
+    /* ===== Footer ===== */
+    .footer {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 24px;
+      background: var(--bg-secondary);
+      border-top: 1px solid var(--border-color);
+      flex-shrink: 0;
+      transition: background var(--transition), border-color var(--transition);
+    }
+    .footer-copyright {
+      font-size: 12px;
+      color: var(--text-muted);
+    }
+    .footer-copyright a {
+      color: var(--accent-primary);
+      text-shadow: var(--glow);
+      text-decoration: none;
+    }
+    .footer-copyright a:hover {
+      text-decoration: underline;
+    }
+    .footer-links {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+    .footer-link {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 12px;
+      transition: all var(--transition);
+    }
+    .footer-link:hover {
+      color: var(--accent-primary);
+      text-shadow: var(--glow);
+    }
+    .footer-link svg {
+      width: 18px;
+      height: 18px;
+      fill: currentColor;
+    }
+    .footer-link:hover svg {
+      filter: drop-shadow(0 0 4px var(--accent-primary));
+    }
+
+    /* ===== Loading ===== */
+    .loading-indicator {
+      display: none;
+      align-items: center;
+      gap: 8px;
+      font-size: 12px;
+      color: var(--text-muted);
+      padding-bottom: 6px;
+    }
+    .loading-indicator.active { display: flex; }
+    .loading-spinner-small {
+      width: 14px;
+      height: 14px;
+      border: 2px solid var(--border-color);
+      border-top-color: var(--accent-primary);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===== Scrollbar ===== */
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: var(--bg-primary); }
+    ::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: var(--accent-primary); }
+
+    /* ===== Responsive ===== */
+    @media (max-width: 1200px) {
+      .calendar-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 860px) {
+      .calendar-grid { grid-template-columns: repeat(2, 1fr); }
+      .filters-bar { gap: 10px; }
+    }
+    @media (max-width: 540px) {
+      .calendar-grid { grid-template-columns: 1fr; }
+      .header { padding: 10px 14px; }
+      .filters-bar { padding: 10px 14px; }
+      .calendar-container { padding: 12px 10px; }
+      .footer { flex-direction: column; gap: 8px; text-align: center; }
+    }
+  </style>
+</head>
+<body>
+  <div id="app">
+
+    <!-- Header -->
+    <header class="header">
+      <a href="./" class="header-title">&gt; CHEATVACATION</a>
+      <div class="theme-toggle" id="theme-toggle" role="button" tabindex="0" aria-label="Toggle dark/light mode">
+        <span class="theme-toggle-label" id="theme-label">DARK</span>
+        <div class="theme-toggle-track">
+          <div class="theme-toggle-thumb"></div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Filters Bar -->
+    <div class="filters-bar">
+      <div class="filter-group">
+        <label for="year-input">Year</label>
+        <input type="number" id="year-input" min="2000" max="2100">
+      </div>
+      <div class="filter-group">
+        <label for="country-select">Country</label>
+        <select id="country-select"></select>
+      </div>
+      <div class="filter-group" id="state-group" style="display:none;">
+        <label for="state-select">State / Region</label>
+        <select id="state-select"></select>
+      </div>
+      <div class="filter-group">
+        <label for="vacation-days">Vacation Days</label>
+        <input type="number" id="vacation-days" value="20" min="0" max="365">
+      </div>
+      <div class="filter-group">
+        <label for="consecutive-days">Min Consecutive</label>
+        <input type="number" id="consecutive-days" value="0" min="0" max="365">
+      </div>
+      <div class="filter-group filter-group-checkbox">
+        <input type="checkbox" id="count-weekends">
+        <label for="count-weekends">Count Weekends</label>
+      </div>
+      <div class="loading-indicator" id="loading-indicator">
+        <div class="loading-spinner-small"></div>
+        <span>Loading holidays...</span>
+      </div>
+      <div class="holiday-info" id="holiday-info"></div>
+    </div>
+
+    <!-- Legend -->
+    <div class="legend">
+      <div class="legend-item"><div class="legend-swatch swatch-weekend"></div> Weekend</div>
+      <div class="legend-item"><div class="legend-swatch swatch-holiday"></div> Public Holiday</div>
+      <div class="legend-item"><div class="legend-swatch swatch-vacation"></div> Vacation Day</div>
+      <div class="legend-item" id="legend-unconfirmed" style="display:none;"><div class="legend-swatch swatch-unconfirmed"></div> Unconfirmed (Nager only)</div>
+      <div class="legend-item"><div class="legend-swatch swatch-today"></div> Today</div>
+      <div class="legend-item vacation-counter" id="vacation-counter" style="margin-left:auto;">
+        VACATION: <span class="info-value" id="vacation-used">0</span> / <span class="info-value" id="vacation-total">20</span>
+      </div>
+    </div>
+
+    <!-- Warning Banner -->
+    <div class="warning-banner" id="warning-banner"></div>
+
+    <!-- Calendar -->
+    <div class="calendar-container">
+      <div class="calendar-grid" id="calendar-grid"></div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <div class="footer-copyright">
+        <a href="https://altsoph.com" target="_blank" rel="noopener">&copy; altsoph</a> 2026
+      </div>
+      <div class="footer-links">
+        <a href="https://github.com/altsoph" target="_blank" rel="noopener" class="footer-link" title="GitHub">
+          <svg viewBox="0 0 24 24"><path d="M12 0c-6.626 0-12 5.373-12 12 0 5.302 3.438 9.8 8.207 11.387.599.111.793-.261.793-.577v-2.234c-3.338.726-4.033-1.416-4.033-1.416-.546-1.387-1.333-1.756-1.333-1.756-1.089-.745.083-.729.083-.729 1.205.084 1.839 1.237 1.839 1.237 1.07 1.834 2.807 1.304 3.492.997.107-.775.418-1.305.762-1.604-2.665-.305-5.467-1.334-5.467-5.931 0-1.311.469-2.381 1.236-3.221-.124-.303-.535-1.524.117-3.176 0 0 1.008-.322 3.301 1.23.957-.266 1.983-.399 3.003-.404 1.02.005 2.047.138 3.006.404 2.291-1.552 3.297-1.23 3.297-1.23.653 1.653.242 2.874.118 3.176.77.84 1.235 1.911 1.235 3.221 0 4.609-2.807 5.624-5.479 5.921.43.372.823 1.102.823 2.222v3.293c0 .319.192.694.801.576 4.765-1.589 8.199-6.086 8.199-11.386 0-6.627-5.373-12-12-12z"/></svg>
+        </a>
+        <a href="https://altsoph.com" target="_blank" rel="noopener" class="footer-link" title="Website">
+          <svg viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z"/></svg>
+        </a>
+        <a href="https://www.linkedin.com/in/altsoph/" target="_blank" rel="noopener" class="footer-link" title="LinkedIn">
+          <svg viewBox="0 0 24 24"><path d="M20.447 20.452h-3.554v-5.569c0-1.328-.027-3.037-1.852-3.037-1.853 0-2.136 1.445-2.136 2.939v5.667H9.351V9h3.414v1.561h.046c.477-.9 1.637-1.85 3.37-1.85 3.601 0 4.267 2.37 4.267 5.455v6.286zM5.337 7.433c-1.144 0-2.063-.926-2.063-2.065 0-1.138.92-2.063 2.063-2.063 1.14 0 2.064.925 2.064 2.063 0 1.139-.925 2.065-2.064 2.065zm1.782 13.019H3.555V9h3.564v11.452zM22.225 0H1.771C.792 0 0 .774 0 1.729v20.542C0 23.227.792 24 1.771 24h20.451C23.2 24 24 23.227 24 22.271V1.729C24 .774 23.2 0 22.222 0h.003z"/></svg>
+        </a>
+        <a href="https://twitter.com/altsoph" target="_blank" rel="noopener" class="footer-link" title="Twitter/X">
+          <svg viewBox="0 0 24 24"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+        </a>
+        <a href="https://oldbytes.space/@altsoph" target="_blank" rel="noopener" class="footer-link" title="Mastodon">
+          <svg viewBox="0 0 24 24"><path d="M23.268 5.313c-.35-2.578-2.617-4.61-5.304-5.004C17.51.242 15.792 0 11.813 0h-.03c-3.98 0-4.835.242-5.288.309C3.882.692 1.496 2.518.917 5.127.64 6.412.61 7.837.661 9.143c.074 1.874.088 3.745.26 5.611.118 1.24.325 2.47.62 3.68.55 2.237 2.777 4.098 4.96 4.857 2.336.792 4.849.923 7.256.38.265-.061.527-.132.786-.213.585-.184 1.27-.39 1.774-.753a.057.057 0 0 0 .023-.043v-1.809a.052.052 0 0 0-.02-.041.053.053 0 0 0-.046-.01 20.282 20.282 0 0 1-4.709.545c-2.73 0-3.463-1.284-3.674-1.818a5.593 5.593 0 0 1-.319-1.433.053.053 0 0 1 .066-.054c1.517.363 3.072.546 4.632.546.376 0 .75 0 1.125-.01 1.57-.044 3.224-.124 4.768-.422.038-.008.077-.015.11-.024 2.435-.464 4.753-1.92 4.989-5.604.008-.145.03-1.52.03-1.67.002-.512.167-3.63-.024-5.545zm-3.748 9.195h-2.561V8.29c0-1.309-.55-1.976-1.67-1.976-1.23 0-1.846.79-1.846 2.35v3.403h-2.546V8.663c0-1.56-.617-2.35-1.848-2.35-1.112 0-1.668.668-1.668 1.977v6.218H4.822V8.102c0-1.31.337-2.35 1.011-3.12.696-.77 1.608-1.164 2.74-1.164 1.311 0 2.302.5 2.962 1.498l.638 1.06.638-1.06c.66-.999 1.65-1.498 2.96-1.498 1.13 0 2.043.395 2.74 1.164.675.77 1.012 1.81 1.012 3.12z"/></svg>
+        </a>
+      </div>
+    </footer>
+
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
