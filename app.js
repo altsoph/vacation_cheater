@@ -1,5 +1,5 @@
 // ===================================================================
-// CheatVacation — Vacation Day Optimizer
+// Vacation Cheater — Vacation Day Optimizer
 // Pure client-side calendar with dual public-holiday API integration
 // Primary: OpenHolidaysAPI (more precise, subdivision-aware)
 // Secondary: Nager.Date (wider country coverage, cross-reference)
@@ -335,6 +335,7 @@
     startDateInput: null,
     btnOptimize: null,
     btnClear: null,
+    btnExport: null,
     optimizerStats: null
   };
 
@@ -378,13 +379,14 @@
     dom.startDateInput = document.getElementById('start-date');
     dom.btnOptimize = document.getElementById('btn-optimize');
     dom.btnClear = document.getElementById('btn-clear');
+    dom.btnExport = document.getElementById('btn-export');
     dom.optimizerStats = document.getElementById('optimizer-stats');
   }
 
   // ===== Theme Management =====
 
   function loadTheme() {
-    const saved = localStorage.getItem('cheatvacation-theme');
+    const saved = localStorage.getItem('vacationcheater-theme');
     if (saved === 'light' || saved === 'dark') {
       state.theme = saved;
     } else {
@@ -408,7 +410,7 @@
 
   function toggleTheme() {
     state.theme = state.theme === 'dark' ? 'light' : 'dark';
-    localStorage.setItem('cheatvacation-theme', state.theme);
+    localStorage.setItem('vacationcheater-theme', state.theme);
     applyTheme();
   }
 
@@ -1065,7 +1067,7 @@
 
     renderCalendar();
     updateVacationCounter();
-    showOptimizerStats(days);
+    showOptimizerStats();
   }
 
   function clearVacation() {
@@ -1078,14 +1080,14 @@
   /**
    * Compute and display statistics about the current vacation plan.
    */
-  function showOptimizerStats(days) {
-    if (!dom.optimizerStats) return;
-    if (state.vacationDates.size === 0) {
-      hideOptimizerStats();
-      return;
-    }
+  /**
+   * Compute vacation stats: blocks containing at least one vacation day.
+   * Returns { used, blocks, longest, totalDaysOff, efficiency } or null if no vacation.
+   */
+  function computeVacationStats() {
+    var used = state.vacationDates.size;
+    if (used === 0) return null;
 
-    // Rebuild day list with vacation included to find free blocks
     var allDays = [];
     var startD = new Date(state.year, 0, 1);
     var endD = new Date(state.year, 11, 31);
@@ -1099,7 +1101,6 @@
     }
 
     // Find free blocks that contain at least one vacation day
-    // (skip plain weekends — those aren't interesting)
     var blocks = [];
     var current = [];
     var currentHasVacation = false;
@@ -1121,21 +1122,35 @@
       blocks.push(current.slice());
     }
 
-    var longestBlock = 0;
-    var totalFreeDays = 0;
+    var longest = 0;
+    var totalDaysOff = 0;
     for (var b = 0; b < blocks.length; b++) {
-      if (blocks[b].length > longestBlock) longestBlock = blocks[b].length;
-      totalFreeDays += blocks[b].length;
+      if (blocks[b].length > longest) longest = blocks[b].length;
+      totalDaysOff += blocks[b].length;
     }
 
-    var used = state.vacationDates.size;
-    var efficiency = used > 0 ? (totalFreeDays / used).toFixed(1) : '0';
+    return {
+      used: used,
+      blocks: blocks.length,
+      longest: longest,
+      totalDaysOff: totalDaysOff,
+      efficiency: used > 0 ? (totalDaysOff / used).toFixed(1) : '0'
+    };
+  }
 
-    var html = '<span class="stat">Vacation days used: <span class="stat-val">' + used + '</span></span>' +
-      '<span class="stat">Vacation streaks: <span class="stat-val">' + blocks.length + '</span></span>' +
-      '<span class="stat">Longest streak: <span class="stat-val">' + longestBlock + ' days</span></span>' +
-      '<span class="stat">Total days off: <span class="stat-val">' + totalFreeDays + '</span></span>' +
-      '<span class="stat">Efficiency: <span class="stat-val">' + efficiency + 'x</span> (days off per vacation day)</span>';
+  function showOptimizerStats() {
+    if (!dom.optimizerStats) return;
+    var stats = computeVacationStats();
+    if (!stats) {
+      hideOptimizerStats();
+      return;
+    }
+
+    var html = '<span class="stat">Vacation days used: <span class="stat-val">' + stats.used + '</span></span>' +
+      '<span class="stat">Vacation streaks: <span class="stat-val">' + stats.blocks + '</span></span>' +
+      '<span class="stat">Longest streak: <span class="stat-val">' + stats.longest + ' days</span></span>' +
+      '<span class="stat">Total days off: <span class="stat-val">' + stats.totalDaysOff + '</span></span>' +
+      '<span class="stat">Efficiency: <span class="stat-val">' + stats.efficiency + 'x</span> (days off per vacation day)</span>';
 
     dom.optimizerStats.innerHTML = html;
     dom.optimizerStats.classList.add('active');
@@ -1145,6 +1160,189 @@
     if (dom.optimizerStats) {
       dom.optimizerStats.classList.remove('active');
     }
+  }
+
+  // ===== PNG Export =====
+
+  function exportPNG() {
+    if (typeof html2canvas === 'undefined') {
+      alert('html2canvas is still loading. Please try again in a moment.');
+      return;
+    }
+
+    var EXPORT_WIDTH = 1200; // px, target width
+
+    // Build a temporary off-screen container with only:
+    // title + legend + calendar + copyright
+    var container = document.createElement('div');
+    container.setAttribute('data-theme', state.theme);
+    // Position off-screen but with a fixed width so layout is constrained
+    container.style.cssText = 'position:fixed;left:-9999px;top:0;width:' + EXPORT_WIDTH + 'px;z-index:-1;';
+
+    // Copy theme styles
+    var style = document.createElement('style');
+    var allStyles = document.querySelector('style');
+    if (allStyles) style.textContent = allStyles.textContent;
+    container.appendChild(style);
+
+    // Wrapper with background — FIXED width, not min-width
+    var wrapper = document.createElement('div');
+    wrapper.style.cssText =
+      'width:' + EXPORT_WIDTH + 'px;' +
+      'background:var(--bg-primary);color:var(--text-primary);' +
+      'font-family:Courier New,Consolas,Liberation Mono,monospace;font-size:16px;' +
+      'padding:24px 28px;overflow:hidden;';
+
+    // Title
+    var title = document.createElement('div');
+    title.style.cssText = 'font-size:22px;font-weight:bold;color:var(--accent-primary);' +
+      'letter-spacing:3px;text-shadow:var(--glow);margin-bottom:18px;text-align:center;';
+    title.textContent = '> VACATION CHEATER \u2014 ' + state.year;
+    wrapper.appendChild(title);
+
+    // Legend — rebuild manually to avoid cloning issues
+    var legend = document.createElement('div');
+    legend.style.cssText =
+      'display:flex;align-items:center;gap:18px;flex-wrap:wrap;' +
+      'padding:10px 0;margin-bottom:18px;' +
+      'border-top:1px solid var(--border-color);border-bottom:1px solid var(--border-color);font-size:12px;';
+
+    var legendItems = [
+      { cls: 'swatch-weekend', label: 'Weekend' },
+      { cls: 'swatch-holiday', label: 'Public Holiday' },
+      { cls: 'swatch-vacation', label: 'Vacation Day' }
+    ];
+    // Include unconfirmed only if there are warnings
+    if (state.warnings && state.warnings.length > 0) {
+      legendItems.push({ cls: 'swatch-unconfirmed', label: 'Unconfirmed' });
+    }
+    legendItems.push({ cls: 'swatch-today', label: 'Today' });
+
+    for (var li = 0; li < legendItems.length; li++) {
+      var item = document.createElement('div');
+      item.className = 'legend-item';
+      item.style.cssText = 'display:flex;align-items:center;gap:6px;color:var(--text-secondary);';
+      var sw = document.createElement('div');
+      sw.className = 'legend-swatch ' + legendItems[li].cls;
+      sw.style.cssText = 'width:14px;height:14px;border-radius:2px;border:1px solid var(--border-color);flex-shrink:0;';
+      item.appendChild(sw);
+      item.appendChild(document.createTextNode(legendItems[li].label));
+      legend.appendChild(item);
+    }
+
+    // Add vacation counter to legend
+    var vacInfo = document.createElement('div');
+    vacInfo.style.cssText = 'margin-left:auto;font-size:13px;font-weight:bold;color:var(--text-muted);letter-spacing:1px;';
+    vacInfo.innerHTML = 'VACATION: <span style="color:var(--accent-primary);text-shadow:var(--glow);">' +
+      state.vacationDates.size + '</span> / <span style="color:var(--accent-primary);text-shadow:var(--glow);">' +
+      state.vacationDays + '</span>';
+    legend.appendChild(vacInfo);
+    wrapper.appendChild(legend);
+
+    // Calendar grid — deep clone with explicit grid layout
+    var calSrc = document.querySelector('.calendar-grid');
+    if (calSrc) {
+      var cal = calSrc.cloneNode(true);
+      // Force 4-column grid with fixed dimensions
+      cal.style.cssText =
+        'display:grid;grid-template-columns:repeat(4,1fr);gap:14px;' +
+        'width:100%;max-width:none;margin:0;';
+      // Ensure month cells don't overflow
+      var monthCells = cal.querySelectorAll('.month-cell');
+      for (var mc = 0; mc < monthCells.length; mc++) {
+        monthCells[mc].style.cssText += 'overflow:hidden;';
+      }
+      wrapper.appendChild(cal);
+    }
+
+    // Stats line (if vacation days are selected)
+    var stats = computeVacationStats();
+    if (stats) {
+      var statsEl = document.createElement('div');
+      statsEl.style.cssText =
+        'display:flex;gap:20px;flex-wrap:wrap;justify-content:center;' +
+        'margin-top:14px;padding:10px 0;font-size:12px;color:var(--text-secondary);' +
+        'border-top:1px solid var(--border-color);';
+      var items = [
+        'Vacation days used: <span style="color:var(--accent-primary);font-weight:bold;text-shadow:var(--glow);">' + stats.used + '</span>',
+        'Vacation streaks: <span style="color:var(--accent-primary);font-weight:bold;text-shadow:var(--glow);">' + stats.blocks + '</span>',
+        'Longest streak: <span style="color:var(--accent-primary);font-weight:bold;text-shadow:var(--glow);">' + stats.longest + ' days</span>',
+        'Total days off: <span style="color:var(--accent-primary);font-weight:bold;text-shadow:var(--glow);">' + stats.totalDaysOff + '</span>',
+        'Efficiency: <span style="color:var(--accent-primary);font-weight:bold;text-shadow:var(--glow);">' + stats.efficiency + 'x</span>'
+      ];
+      for (var si = 0; si < items.length; si++) {
+        var sp = document.createElement('span');
+        sp.innerHTML = items[si];
+        statsEl.appendChild(sp);
+      }
+      wrapper.appendChild(statsEl);
+    }
+
+    // Copyright line
+    var copy = document.createElement('div');
+    copy.style.cssText = 'margin-top:14px;font-size:12px;color:var(--text-muted);text-align:center;';
+    copy.innerHTML = '\u00A9 altsoph, <span style="color:var(--accent-primary);text-shadow:var(--glow);">altsoph.com/pp/vc</span>';
+    wrapper.appendChild(copy);
+
+    container.appendChild(wrapper);
+    document.body.appendChild(container);
+
+    // Use scale 1 since we're already at 1200px — output will be 1200 x height
+    html2canvas(wrapper, {
+      backgroundColor: null,
+      scale: 2,
+      width: EXPORT_WIDTH,
+      useCORS: true,
+      logging: false
+    }).then(function (canvas) {
+      document.body.removeChild(container);
+
+      // Try clipboard first
+      canvas.toBlob(function (blob) {
+        if (blob && navigator.clipboard && navigator.clipboard.write) {
+          var item = new ClipboardItem({ 'image/png': blob });
+          navigator.clipboard.write([item]).then(function () {
+            flashExportButton('Copied!');
+          }).catch(function () {
+            openInNewTab(canvas);
+          });
+        } else {
+          openInNewTab(canvas);
+        }
+      }, 'image/png');
+    }).catch(function (err) {
+      document.body.removeChild(container);
+      console.error('Export failed:', err);
+      alert('Export failed. See console for details.');
+    });
+  }
+
+  function openInNewTab(canvas) {
+    var dataUrl = canvas.toDataURL('image/png');
+    var win = window.open('');
+    if (win) {
+      win.document.write(
+        '<html><head><title>Vacation Cheater Export</title>' +
+        '<style>body{margin:0;background:#111;display:flex;justify-content:center;padding:20px;}' +
+        'img{max-width:100%;height:auto;}</style></head>' +
+        '<body><img src="' + dataUrl + '"></body></html>'
+      );
+      win.document.close();
+      flashExportButton('Opened!');
+    }
+  }
+
+  function flashExportButton(text) {
+    if (!dom.btnExport) return;
+    var orig = dom.btnExport.textContent;
+    dom.btnExport.textContent = text;
+    dom.btnExport.style.borderColor = 'var(--accent-primary)';
+    dom.btnExport.style.color = 'var(--accent-primary)';
+    setTimeout(function () {
+      dom.btnExport.textContent = orig;
+      dom.btnExport.style.borderColor = '';
+      dom.btnExport.style.color = '';
+    }, 1500);
   }
 
   // ===== Event Listeners =====
@@ -1213,6 +1411,9 @@
     // Optimizer buttons
     dom.btnOptimize.addEventListener('click', runOptimizer);
     dom.btnClear.addEventListener('click', clearVacation);
+
+    // Export
+    dom.btnExport.addEventListener('click', exportPNG);
   }
 
   // ===== Start =====

@@ -1,3 +1,12 @@
+ ☐ ++навайбкодить оптимизатор отпусков -- страна / город для выходных, число дней, мин непрерывный период, доп ограничения (конкретная неделя каникул) -- го
+     https://openholidaysapi.org/PublicHolidays?countryIsoCode=DE&validFrom=2026-01-01&validTo=2026-12-31&languageIsoCode=DE&subdivisionCode=DE-BE
+     https://date.nager.at/api/v3/PublicHolidays/2026/de
+     ? https://calendarific.com/
+     ? https://www.holidays.rest/
+     ? https://www.abstractapi.com/api/holidays-api#:~:text=%240
+     https://chatgpt.com/share/6983e4eb-3330-8011-acd3-e902a9d860f1
+
+
 /1/
 
 we are building js enabled calendar app (pure css/html/js no backend)
@@ -72,3 +81,28 @@ they consider usual weekends making the stats non-informative
 change title to Vacation Cheater
 add export mode -- save PNG to clipboard (or open in a new tab); we want there to see only calendar + legend + title 
 and copyright line (c)altsoph,  http://altsoph.com/pp/vc
+
+//
+
+it's completely wrong the size and the form factor -- i saved it for you in out.png
+I want something like 1200x1200 or simialr
+
+// 
+
+add stats on exported image
+
+// 
+
+i put vc_logo.png for you
+use it for favicon and for media preview
+(the production URL would be http://altsoph.com/pp/vc)
+
+//
+
+update meta tags -- title, description, keywords and so on if necessary to reflect the project essense
+
+//
+
+now generate README.md for github repo
+keep it consice and full with interesting tech details
+

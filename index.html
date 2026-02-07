@@ -3,40 +3,44 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>CheatVacation — Vacation Day Optimizer</title>
+  <title>Vacation Cheater — Maximize Your Days Off</title>
 
   <!-- SEO Meta Tags -->
-  <meta name="description" content="CheatVacation: Optimize your vacation days by leveraging public holidays and weekends. Plan smarter, vacation longer.">
-  <meta name="keywords" content="vacation, holiday, optimizer, calendar, public holidays, days off, vacation planning, bridge days">
+  <meta name="description" content="Vacation Cheater: Free tool to squeeze the most days off from your vacation budget. Finds bridge days between public holidays and weekends, optimizes placement with a greedy algorithm. Supports 100+ countries with regional holidays.">
+  <meta name="keywords" content="vacation optimizer, bridge days, public holidays, days off calculator, Brückentage, holiday planner, vacation calendar, maximize time off, free day optimizer, long weekend planner, PTO optimizer, Urlaubsplaner">
   <meta name="author" content="altsoph">
   <meta name="robots" content="index, follow">
 
   <!-- Open Graph / Facebook / LinkedIn -->
   <meta property="og:type" content="website">
-  <meta property="og:url" content="https://altsoph.com/pp/cheatvacation/">
-  <meta property="og:title" content="CheatVacation — Vacation Day Optimizer">
-  <meta property="og:description" content="Optimize your vacation days by leveraging public holidays and weekends. Plan smarter, vacation longer.">
-  <meta property="og:image" content="https://altsoph.com/pp/cheatvacation/preview.png">
-  <meta property="og:site_name" content="altsoph">
+  <meta property="og:url" content="https://altsoph.com/pp/vc/">
+  <meta property="og:title" content="Vacation Cheater — Maximize Your Days Off">
+  <meta property="og:description" content="Free tool to squeeze the most days off from your vacation budget. Finds bridge days between public holidays and weekends. 100+ countries, regional holidays, greedy optimizer.">
+  <meta property="og:image" content="https://altsoph.com/pp/vc/vc_logo.png">
+  <meta property="og:site_name" content="Vacation Cheater">
 
   <!-- Twitter / X -->
-  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:card" content="summary">
   <meta name="twitter:site" content="@altsoph">
   <meta name="twitter:creator" content="@altsoph">
-  <meta name="twitter:title" content="CheatVacation — Vacation Day Optimizer">
-  <meta name="twitter:description" content="Optimize your vacation days by leveraging public holidays and weekends. Plan smarter, vacation longer.">
-  <meta name="twitter:image" content="https://altsoph.com/pp/cheatvacation/preview.png">
-  <meta name="twitter:image:alt" content="CheatVacation preview — calendar with optimized vacation days">
+  <meta name="twitter:title" content="Vacation Cheater — Maximize Your Days Off">
+  <meta name="twitter:description" content="Free tool to squeeze the most days off from your vacation budget. Finds bridge days between public holidays and weekends. 100+ countries, greedy optimizer.">
+  <meta name="twitter:image" content="https://altsoph.com/pp/vc/vc_logo.png">
+  <meta name="twitter:image:alt" content="Vacation Cheater — calendar icon with a shooting star">
 
   <!-- Telegram -->
-  <meta property="og:image:alt" content="CheatVacation — Vacation Day Optimizer Calendar">
+  <meta property="og:image:alt" content="Vacation Cheater — calendar icon with a shooting star">
 
   <!-- Additional Meta -->
   <meta name="theme-color" content="#00ff00">
-  <link rel="canonical" href="https://altsoph.com/pp/cheatvacation/">
+  <link rel="canonical" href="https://altsoph.com/pp/vc/">
 
-  <!-- Favicon placeholder (to be provided later) -->
-  <!-- <link rel="icon" type="image/svg+xml" href="favicon.svg"> -->
+  <!-- Favicon -->
+  <link rel="icon" type="image/png" href="vc_logo.png">
+  <link rel="apple-touch-icon" href="vc_logo.png">
+
+  <!-- html2canvas for PNG export -->
+  <script src="https://cdn.jsdelivr.net/npm/html2canvas@1.4.1/dist/html2canvas.min.js" defer></script>
 
   <style>
     /* ===== Dark Theme (Hacker Green — from example.html) ===== */
@@ -186,6 +190,15 @@
       transition: color var(--transition);
     }
     .header-title:hover { text-shadow: 0 0 15px var(--accent-primary); }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .btn-export {
+      font-size: 11px;
+      padding: 5px 10px;
+    }
 
     /* Theme Toggle */
     .theme-toggle {
@@ -716,12 +729,15 @@
 
     <!-- Header -->
     <header class="header">
-      <a href="./" class="header-title">&gt; CHEATVACATION</a>
-      <div class="theme-toggle" id="theme-toggle" role="button" tabindex="0" aria-label="Toggle dark/light mode">
+      <a href="./" class="header-title">&gt; VACATION CHEATER</a>
+      <div class="header-actions">
+        <button class="btn-action btn-export" id="btn-export" title="Export calendar as PNG image">Export PNG</button>
+        <div class="theme-toggle" id="theme-toggle" role="button" tabindex="0" aria-label="Toggle dark/light mode">
         <span class="theme-toggle-label" id="theme-label">DARK</span>
         <div class="theme-toggle-track">
           <div class="theme-toggle-thumb"></div>
         </div>
+      </div>
       </div>
     </header>
 
@@ -790,7 +806,7 @@
     <!-- Footer -->
     <footer class="footer">
       <div class="footer-copyright">
-        <a href="https://altsoph.com" target="_blank" rel="noopener">&copy; altsoph</a> 2026
+        <a href="https://altsoph.com" target="_blank" rel="noopener">&copy; altsoph</a>, <a href="https://altsoph.com/pp/vc/" target="_blank" rel="noopener">altsoph.com/pp/vc</a>
       </div>
       <div class="footer-links">
         <a href="https://github.com/altsoph" target="_blank" rel="noopener" class="footer-link" title="GitHub">
